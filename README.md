@@ -1,6 +1,7 @@
 # Bankist Landing Page - Advanced DOM Manipulation
 
 A modern banking landing page built as part of Jonas Schmedtmann's JavaScript course to learn advanced DOM manipulation techniques and JavaScript concepts.
+
 The script.js file has comments I added to better understand the code while learning.
 
 ![Bankist Preview](img/hero.png)
