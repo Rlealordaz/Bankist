@@ -1,10 +1,11 @@
+
 'use strict';
 
 const modal = document.querySelector('.modal');
 const overlay = document.querySelector('.overlay');
 const btnCloseModal = document.querySelector('.btn--close-modal');
 const btnsOpenModal = document.querySelectorAll('.btn--show-modal');
-// smooth scroll,para cuando se toque learn more baje hasta el enlace
+// Smooth scroll button - navigates to the first section when clicked
 const btnScrollTo = document.querySelector('.btn--scroll-to');
 
 const section1 = document.querySelector('#section--1');
@@ -40,38 +41,36 @@ document.addEventListener('keydown', function (e) {
 
 btnScrollTo.addEventListener('click', function (e) {
   const s1coords = section1.getBoundingClientRect();
-  // coordenadas de learn more
+  // Log button coordinates relative to the viewport
   console.log(e.target.getBoundingClientRect());
 
-  // distancia de cuando me muevo por el scroll, y aprieto el boton
+  // Log current scroll position when button is clicked
   console.log(`Current scroll (X/Y)`, window.pageXOffset, window.pageYOffset);
 
-  //Smooth Scrolling
-  /* window.scrollTo({
+  // Smooth Scrolling - Modern approach using scrollIntoView()
+  /* Old way of implementing smooth scrolling:
+  window.scrollTo({
     left: s1coords.left + window.pageXOffset,
     top: s1coords.top + window.pageYOffset,
     behavior: 'smooth',
   });
-});
-*/
+  */
 
   section1.scrollIntoView({ behavior: 'smooth' });
 });
 
-//Page navigation
+// Page Navigation - Implementing smooth scrolling using Event Delegation
+// Instead of attaching event listeners to each link individually,
+// we use event delegation for better performance
 
-//document.querySelectorAll('.//nav__link').forEach(function (el) {
-//  el.addEventListener('click', //function (e) {
-
-// Event Delegation
-
-//1. Add Event ;istenerto common parent element
-//2. Determine what element originated the event
+// Event Delegation Pattern:
+// 1. Add event listener to common parent element
+// 2. Determine which element originated the event
 
 document.querySelector('.nav__links').addEventListener('click', function (e) {
   e.preventDefault();
 
-  //Matching strategy
+  // Matching strategy - check if clicked element is a nav link
   if (e.target.classList.contains('nav__link')) {
     const id = e.target.getAttribute('href');
     console.log(id);
@@ -79,52 +78,46 @@ document.querySelector('.nav__links').addEventListener('click', function (e) {
   }
 });
 
-//Tabbed component
-
-//Prueba, no es optimo pq si hubiera muchos elementos entonces consume muchos recursos
-//tabs.forEach(t => t.addEventListener('click', () => console.log('TAB')));
-
-//Using Event delegation
+// Tabbed Component - Operations section
+// Using Event Delegation for better performance
+// (Attaching listeners to each tab would be inefficient with many elements)
 
 tabsContainer.addEventListener('click', function (e) {
-  // const clicked = e.target;
-  //console.log(clicked);
-
-  // se necesita una forma para acceder al boton
+  // Use closest() to handle clicks on child elements (span) and get the button
   const clicked = e.target.closest('.operations__tab');
   console.log(clicked);
-  //guard clause
+  
+  // Guard clause - ignore clicks outside of tabs
   if (!clicked) return;
 
-  //Remove active classes, aqui quita la que se  dejo de usar y no se seniala
+  // Remove active classes from all tabs and content areas
   tabs.forEach(t => t.classList.remove('operations__tab--active'));
-
   tabsContent.forEach(c => c.classList.remove('operations__content--active'));
 
-  //Active tab, la animacion que seniala cual se esta usando
+  // Activate clicked tab (visual indicator)
   clicked.classList.add('operations__tab--active');
 
-  //Activate content area, aqui se cambia y se muestra la que se clickea
+  // Activate corresponding content area based on data-tab attribute
   console.log(clicked.dataset.tab);
   document
     .querySelector(`.operations__content--${clicked.dataset.tab}`)
     .classList.add('operations__content--active');
 });
 
-//Menu fade animation
-//mouseover hace la burbuja
+// Menu Fade Animation
+// Implements hover effect that fades sibling links and logo
+// Uses mouseover (bubbles) instead of mouseenter (doesn't bubble)
 
-// se busca un padre que este cercano
-// aqui se pone opaco lo que esta alrededor cuadno se da click en una opcion
-
-// en esta funcion de handler solo se necesita un parametro, lo otro se le envia a traves de bind,con el this
+// Handler function uses 'this' keyword to receive opacity value via bind()
+// This allows passing arguments to event handlers elegantly
 const handleHover = function (e) {
   if (e.target.classList.contains('nav__link')) {
     const link = e.target;
+    // Select all sibling links using closest() to traverse up then query down
     const siblings = link.closest('.nav').querySelectorAll('.nav__link');
-
     const logo = link.closest('.nav').querySelector('img');
 
+    // Fade out all siblings except the hovered link
     siblings.forEach(el => {
       if (el !== link) el.style.opacity = this;
     });
@@ -132,25 +125,29 @@ const handleHover = function (e) {
   }
 };
 
+// Bind different opacity values for hover in/out
 nav.addEventListener('mouseover', handleHover.bind(0.5));
-
 nav.addEventListener('mouseout', handleHover.bind(1));
 
-//Sticky Navigation: Intesection Observer API
+// Sticky Navigation: Intersection Observer API
+// More performant than listening to scroll events
 
 const header = document.querySelector('.header');
-// haciendo responsive la altura
+// Dynamically calculate nav height for responsive design
 const navHeight = nav.getBoundingClientRect().height;
 
 const stickyNav = function (entries) {
   const [entry] = entries;
-  // console.log(entry);
 
+  // Add sticky class when header is not intersecting viewport
   if (!entry.isIntersecting) nav.classList.add('sticky');
   else nav.classList.remove('sticky');
 };
 
-// aqui las propiedades donde va a intersectar
+// Observer configuration:
+// - root: null (viewport)
+// - threshold: 0 (trigger when 0% of header is visible)
+// - rootMargin: negative nav height (apply sticky exactly when header is out)
 const headerObserver = new IntersectionObserver(stickyNav, {
   root: null,
   threshold: 0,
@@ -159,46 +156,49 @@ const headerObserver = new IntersectionObserver(stickyNav, {
 
 headerObserver.observe(header);
 
-//Animacion dada de css, para que se revelen las secciones mientras se va bajando
-
-//Reveal Section
+// Reveal Sections on Scroll
+// Sections fade in and slide up when scrolling (animation defined in CSS)
 
 const allSections = document.querySelectorAll('.section');
 
 const revealSection = function (entries, observer) {
   entries.forEach(entry => {
-    // console.log(entry);
-
-    //apunta al target que esta dentro de cada seccion para saber cuando mostrar, como target intersectado
+    // Guard clause - only reveal when section is intersecting
     if (!entry.isIntersecting) return;
+    
+    // Remove hidden class to trigger CSS animation
     entry.target.classList.remove('section--hidden');
+    // Stop observing once revealed (performance optimization)
     observer.unobserve(entry.target);
   });
 };
+
 const sectionObserver = new IntersectionObserver(revealSection, {
   root: null,
-  // lo que se demora en salir
-  threshold: 0.15,
+  threshold: 0.15, // Trigger when 15% of section is visible
 });
 
 allSections.forEach(function (section) {
   sectionObserver.observe(section);
+  // Uncomment to add hidden class initially:
   // section.classList.add('section--hidden');
 });
 
-// Lazy loading images
+// Lazy Loading Images
+// Images load only when approaching viewport for performance optimization
+// Uses low-quality placeholders initially with blur effect
 
 const imgTargets = document.querySelectorAll('img[data-src]');
 
 const loadImg = function (entries, observer) {
   const [entry] = entries;
-  // console.log(entry);
 
   if (!entry.isIntersecting) return;
 
-  //Replace src with data-src
+  // Replace placeholder src with high-quality image from data-src
   entry.target.src = entry.target.dataset.src;
 
+  // Remove blur filter only after image has fully loaded
   entry.target.addEventListener('load', function () {
     entry.target.classList.remove('lazy-img');
   });
@@ -209,13 +209,13 @@ const loadImg = function (entries, observer) {
 const imgObserver = new IntersectionObserver(loadImg, {
   root: null,
   threshold: 0,
-  // se carga la imagen 200px antes
-  rootMargin: '200px',
+  rootMargin: '200px', // Load images 200px before they enter viewport
 });
 
 imgTargets.forEach(img => imgObserver.observe(img));
 
-//Slider
+// Slider Component - Testimonials Carousel
+// Encapsulated in a function to avoid polluting global scope
 const slider = function () {
   const slides = document.querySelectorAll('.slide');
   const btnLeft = document.querySelector('.slider__btn--left');
@@ -225,12 +225,9 @@ const slider = function () {
   let curSlide = 0;
   const maxSlide = slides.length;
 
-  //const slider = document.querySelector('.slider');
-  //slider.style.transform = ' scale(0.4) //trnaslateX(-800px)';
-  //slider.style.overflow = 'visible';
-
-  //creando dots, es crear los puntos de las imagenes que marca la posicion
-
+  // Helper Functions
+  
+  // Creates navigation dots dynamically based on number of slides
   const createDots = function () {
     slides.forEach(function (_, i) {
       dotContainer.insertAdjacentHTML(
@@ -240,8 +237,7 @@ const slider = function () {
     });
   };
 
-  // para que margue cual dot esta seleccionado
-
+  // Updates active state of navigation dots
   const activateDot = function (slide) {
     document
       .querySelectorAll('.dots__dot')
@@ -252,21 +248,19 @@ const slider = function () {
       .classList.add('dots__dot--active');
   };
 
-  // refacturando la mejor manera es con funciones a veces
-
+  // Moves slides using CSS transform
+  // Example: slide 1 -> 0: -100%, 1: 0%, 2: 100%, 3: 200%
   const goToSlide = function (slide) {
     slides.forEach(
       (s, i) => (s.style.transform = `translateX(${100 * (i - slide)}%)`)
     );
   };
 
-  // -100%, 0%, 100%, 200%
-
-  //Next Silde, aqui se mueve
-
+  // Navigation Functions
+  
   const nextSlide = function () {
     if (curSlide === maxSlide - 1) {
-      curSlide = 0;
+      curSlide = 0; // Loop back to first slide
     } else {
       curSlide++;
     }
@@ -277,7 +271,7 @@ const slider = function () {
 
   const prevSlide = function () {
     if (curSlide === 0) {
-      curSlide = maxSlide - 1;
+      curSlide = maxSlide - 1; // Loop to last slide
     } else {
       curSlide--;
     }
@@ -285,33 +279,29 @@ const slider = function () {
     activateDot(curSlide);
   };
 
-  //condiciones iniciales
+  // Initialization
   const init = function () {
     goToSlide(0);
     createDots();
-
     activateDot(0);
   };
   init();
-  //Event handlers del slice
 
+  // Event Handlers
+  
+  // Button navigation
   btnRight.addEventListener('click', nextSlide);
   btnLeft.addEventListener('click', prevSlide);
 
-  // Para que se mueva las imagenes utilizando las flechas
-
+  // Keyboard navigation (arrow keys)
   document.addEventListener('keydown', function (e) {
     if (e.key === 'ArrowLeft') prevSlide();
     e.key === 'ArrowRight' && nextSlide();
   });
 
-  // para el dot
-
+  // Dot navigation - click on any dot to jump to that slide
   dotContainer.addEventListener('click', function (e) {
     if (e.target.classList.contains('dots__dot')) {
-      // BUG in v2: This way, we're not keeping track of the current slide when clicking on a slide
-      // const { slide } = e.target.dataset;
-
       curSlide = Number(e.target.dataset.slide);
       goToSlide(curSlide);
       activateDot(curSlide);
